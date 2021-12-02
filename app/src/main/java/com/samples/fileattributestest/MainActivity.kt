@@ -85,6 +85,12 @@ class MainActivity : ComponentActivity() {
                         Divider()
 
                         ListItem {
+                            /**
+                             * On Android R+, we use [MediaStore.createWriteRequest] to request
+                             * user's consent to be able to edit the file, on Android Q and lower,
+                             * we don't have to request that consent to edit if we have the
+                             * [READ_EXTERNAL_STORAGE] permission
+                             */
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                                 Button(
                                     enabled = mostRecentImage != null,
@@ -112,6 +118,9 @@ class MainActivity : ComponentActivity() {
                         Divider()
                         Spacer(Modifier.height(20.dp))
 
+                        /**
+                         * Display image metadata once it has been fetched
+                         */
                         mostRecentImage?.let { image ->
                             ListItem(trailing = { Text("Filename") }) {
                                 Text(image.filename)
@@ -149,6 +158,9 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    /**
+     * Check if app has [READ_EXTERNAL_STORAGE] permission
+     */
     private fun hasStoragePermission(): Boolean {
         return ContextCompat.checkSelfPermission(
             this,
@@ -156,6 +168,10 @@ class MainActivity : ComponentActivity() {
         ) == PackageManager.PERMISSION_GRANTED
     }
 
+    /**
+     * Logic to create a [MediaStore.createWriteRequest] for
+     * [ActivityResultContracts.StartIntentSenderForResult]
+     */
     @RequiresApi(Build.VERSION_CODES.R)
     private fun editImageWithWriteRequest(uri: Uri): IntentSenderRequest {
         return IntentSenderRequest.Builder(
@@ -167,6 +183,10 @@ class MainActivity : ComponentActivity() {
             .build()
     }
 
+    /**
+     * Update the file last modification date with given path and re-scan it to update its metadata
+     * on MediaStore
+     */
     private fun editLastModificationDate(path: String) {
         val file = File(path)
         val now = System.currentTimeMillis()
@@ -178,6 +198,9 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    /**
+     * Scan a path to update its metadata on MediaStore
+     */
     private suspend fun scanPath(path: String, mimeType: String): Uri? {
         return suspendCancellableCoroutine { continuation ->
             MediaScannerConnection.scanFile(
@@ -203,6 +226,9 @@ class MainActivity : ComponentActivity() {
         val path: String,
     )
 
+    /**
+     * Query MediaStore to get the most recently added image
+     */
     private fun getMostRecentImage(): ImageResource {
         val imageCollection = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
