@@ -31,7 +31,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.samples.fileattributestest.ui.theme.FileAttributesTestTheme
 
-class MainActivity : ComponentActivity() {
+class ComposeExampleActivity : ComponentActivity() {
     @ExperimentalMaterialApi
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
