@@ -12,7 +12,7 @@ class AndroidViewsExampleActivity : AppCompatActivity() {
     private lateinit var binding: AndroidViewsExampleActivityBinding
     private var mostRecentImage: ImageResource? = null
 
-    private val requestPermission =
+    private val requestPermissions =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
             updateUi()
         }
@@ -44,7 +44,15 @@ class AndroidViewsExampleActivity : AppCompatActivity() {
     }
 
     private fun setupUi() {
-        binding.requestPermission.setOnClickListener {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            binding.requestPermissions.text = "Request read storage permission"
+            binding.editImageAttribute.text = "Click to edit last item (write request)"
+        } else {
+            binding.requestPermissions.text = "Request read/write storage permissions"
+            binding.editImageAttribute.text = "Click to edit last item (without write request)"
+        }
+
+        binding.requestPermissions.setOnClickListener {
             /**
              * On Android R+, we don't need to request [WRITE_EXTERNAL_STORAGE] to edit 3rd party
              * media files but we do need to request [READ_EXTERNAL_STORAGE] and explicit user
@@ -53,11 +61,9 @@ class AndroidViewsExampleActivity : AppCompatActivity() {
              * [WRITE_EXTERNAL_STORAGE] to edit 3rd party files
              */
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                requestPermission.launch(arrayOf(READ_EXTERNAL_STORAGE))
-                binding.editImageAttribute.text = "Click to edit last item (write request)"
+                requestPermissions.launch(arrayOf(READ_EXTERNAL_STORAGE))
             } else {
-                requestPermission.launch(arrayOf(READ_EXTERNAL_STORAGE, WRITE_EXTERNAL_STORAGE))
-                binding.editImageAttribute.text = "Click to edit last item without (write request)"
+                requestPermissions.launch(arrayOf(READ_EXTERNAL_STORAGE, WRITE_EXTERNAL_STORAGE))
             }
         }
 
@@ -69,7 +75,7 @@ class AndroidViewsExampleActivity : AppCompatActivity() {
 
         binding.editImageAttribute.setOnClickListener {
             /**
-             * On Android R+, we use [MediaStore.createWriteRequest] to request
+             * On Android R+, we use [android.provider.MediaStore.createWriteRequest] to request
              * user's consent to be able to edit the file, on Android Q and lower,
              * we don't have to request that consent to edit if we have the
              * [READ_EXTERNAL_STORAGE] permission
@@ -88,13 +94,13 @@ class AndroidViewsExampleActivity : AppCompatActivity() {
 
     private fun updateUi() {
         val hasPermission = StorageUtils.hasStoragePermission(this)
-        binding.requestPermission.isEnabled = !hasPermission
+        binding.requestPermissions.isEnabled = !hasPermission
         binding.getMostRecentImage.isEnabled = hasPermission
 
         /**
          * Display image metadata once it has been fetched
          */
-        if(mostRecentImage == null) {
+        if (mostRecentImage == null) {
             binding.editImageAttribute.isEnabled = false
         } else {
             binding.editImageAttribute.isEnabled = true

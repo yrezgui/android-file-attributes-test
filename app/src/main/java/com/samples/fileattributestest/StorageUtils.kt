@@ -1,6 +1,7 @@
 package com.samples.fileattributestest
 
 import android.Manifest.permission.READ_EXTERNAL_STORAGE
+import android.Manifest.permission.WRITE_EXTERNAL_STORAGE
 import android.content.ContentUris
 import android.content.Context
 import android.content.pm.PackageManager
@@ -28,13 +29,24 @@ data class ImageResource(
 
 object StorageUtils {
     /**
-     * Check if app has [READ_EXTERNAL_STORAGE] permission
+     * Check if app has [READ_EXTERNAL_STORAGE] and [WRITE_EXTERNAL_STORAGE] permissions
      */
     fun hasStoragePermission(context: Context): Boolean {
-        return ContextCompat.checkSelfPermission(
-            context,
-            READ_EXTERNAL_STORAGE
-        ) == PackageManager.PERMISSION_GRANTED
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            ContextCompat.checkSelfPermission(
+                context,
+                READ_EXTERNAL_STORAGE
+            ) == PackageManager.PERMISSION_GRANTED
+        } else {
+            ContextCompat.checkSelfPermission(
+                context,
+                READ_EXTERNAL_STORAGE
+            ) == PackageManager.PERMISSION_GRANTED
+                    && ContextCompat.checkSelfPermission(
+                context,
+                WRITE_EXTERNAL_STORAGE
+            ) == PackageManager.PERMISSION_GRANTED
+        }
     }
 
     /**

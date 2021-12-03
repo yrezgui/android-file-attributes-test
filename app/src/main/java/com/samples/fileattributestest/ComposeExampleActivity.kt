@@ -1,6 +1,7 @@
 package com.samples.fileattributestest
 
 import android.Manifest.permission.READ_EXTERNAL_STORAGE
+import android.Manifest.permission.WRITE_EXTERNAL_STORAGE
 import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
@@ -46,9 +47,9 @@ class ComposeExampleActivity : ComponentActivity() {
                     )
                 }
 
-                val requestPermission =
-                    rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
-                        hasStoragePermission = it
+                val requestPermissions =
+                    rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
+                        hasStoragePermission = StorageUtils.hasStoragePermission(context)
                     }
 
                 var mostRecentImage by remember { mutableStateOf<ImageResource?>(null) }
@@ -68,8 +69,37 @@ class ComposeExampleActivity : ComponentActivity() {
                 Surface(Modifier.padding(top = 10.dp), color = MaterialTheme.colors.background) {
                     Column {
                         ListItem(trailing = { Text(hasStoragePermission.toString()) }) {
-                            Button(onClick = { requestPermission.launch(READ_EXTERNAL_STORAGE) }) {
-                                Text("Request read storage permission")
+
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                                Button(onClick = {
+                                    requestPermissions.launch(arrayOf(READ_EXTERNAL_STORAGE))
+                                }) {
+                                    Text("Request read storage permission")
+                                }
+                            } else {
+                                Button(onClick = {
+                                    requestPermissions.launch(arrayOf(READ_EXTERNAL_STORAGE, WRITE_EXTERNAL_STORAGE))
+                                }) {
+                                    Text("Request read/write storage permissions")
+                                }
+                            }
+                            Button(onClick = {
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                                    requestPermissions.launch(arrayOf(READ_EXTERNAL_STORAGE))
+                                } else {
+                                    requestPermissions.launch(
+                                        arrayOf(
+                                            READ_EXTERNAL_STORAGE,
+                                            WRITE_EXTERNAL_STORAGE
+                                        )
+                                    )
+                                }
+                            }) {
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                                    Text("Click to edit last item (write request)")
+                                } else {
+                                    Text("Click to edit last item (without write request)")
+                                }
                             }
                         }
                         Divider()

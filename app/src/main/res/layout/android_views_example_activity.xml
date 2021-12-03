@@ -7,11 +7,11 @@
     tools:context=".AndroidViewsExampleActivity">
 
     <Button
-        android:id="@+id/request_permission"
+        android:id="@+id/request_permissions"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:text="Request read storage permission"
+        android:text="Request read/write storage permissions"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
@@ -25,7 +25,7 @@
         android:text="Get most recent image"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/request_permission" />
+        app:layout_constraintTop_toBottomOf="@+id/request_permissions" />
 
     <Button
         android:id="@+id/edit_image_attribute"
