@@ -21,7 +21,7 @@ class AndroidViewsExampleActivity : AppCompatActivity() {
         registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
             if (result.resultCode == RESULT_OK) {
                 mostRecentImage?.let {
-                    StorageUtils.editLastModificationDate(this, it.path)
+                    StorageUtils.editLastModificationDate(this, it)
                     mostRecentImage = StorageUtils.getMostRecentImage(this)
                     updateUi()
                 }
@@ -85,7 +85,7 @@ class AndroidViewsExampleActivity : AppCompatActivity() {
                     StorageUtils.editImageWithWriteRequest(this, mostRecentImage!!.uri)
                 )
             } else {
-                StorageUtils.editLastModificationDate(this, mostRecentImage!!.path)
+                StorageUtils.editLastModificationDate(this, mostRecentImage!!)
                 mostRecentImage = StorageUtils.getMostRecentImage(this)
                 updateUi()
             }

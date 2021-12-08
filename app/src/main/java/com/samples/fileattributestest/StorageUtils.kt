@@ -5,16 +5,27 @@ import android.Manifest.permission.WRITE_EXTERNAL_STORAGE
 import android.content.ContentUris
 import android.content.Context
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
 import android.media.MediaScannerConnection
 import android.net.Uri
 import android.os.Build
+import android.os.Environment
 import android.provider.MediaStore
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.minus
+import kotlinx.datetime.toLocalDateTime
 import java.io.File
 import kotlin.coroutines.resume
 
@@ -50,6 +61,17 @@ object StorageUtils {
     }
 
     /**
+     * Check if app has [android.Manifest.permission.MANAGE_EXTERNAL_STORAGE] permission
+     */
+    fun hasManageStoragePermission(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            Environment.isExternalStorageManager()
+        } else {
+            false
+        }
+    }
+
+    /**
      * Logic to create a [MediaStore.createWriteRequest] for
      * [ActivityResultContracts.StartIntentSenderForResult]
      */
@@ -64,25 +86,50 @@ object StorageUtils {
             .build()
     }
 
+    fun editFileContent(context: Context, imageResource: ImageResource) {
+        runBlocking {
+            delay(2000L)
+        }
+        context.contentResolver.openOutputStream(imageResource.uri).use { outputStream ->
+            val bitmap = Bitmap.createBitmap(768, 448, Bitmap.Config.ARGB_8888)
+            val canvas = Canvas(bitmap)
+
+            val paint = Paint()
+            paint.color = Color.GREEN
+            paint.style = Paint.Style.FILL
+            canvas.drawPaint(paint)
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
+        }
+
+        runBlocking {
+            val file = File(imageResource.path)
+            scanPath(context, file.absolutePath, "image/jpeg")
+            val fileLastModification = Instant.fromEpochMilliseconds(file.lastModified())
+            println("Img Modified -> file($fileLastModification)")
+        }
+    }
+
     /**
      * Update the file last modification date with given path and re-scan it to update its metadata
      * on MediaStore
      */
-    fun editLastModificationDate(context: Context, path: String) {
-        val file = File(path)
-        val now = System.currentTimeMillis()
-        file.setLastModified(now)
+    fun editLastModificationDate(context: Context, imageResource: ImageResource) {
+        val file = File(imageResource.path)
+        val now = Clock.System.now()
+        file.setLastModified(now.toEpochMilliseconds())
 
         runBlocking {
             scanPath(context, file.absolutePath, "image/jpeg")
-            println("setLastModified: now($now) || lastModified(${file.lastModified()})")
+            val fileLastModification = Instant.fromEpochMilliseconds(file.lastModified())
+            println("setLastModified file($now)")
+            println("Img scanner  -> file($fileLastModification)")
         }
     }
 
     /**
      * Scan a path to update its metadata on MediaStore
      */
-    private suspend fun scanPath(context: Context, path: String, mimeType: String): Uri? {
+    suspend fun scanPath(context: Context, path: String, mimeType: String): Uri? {
         return suspendCancellableCoroutine { continuation ->
             MediaScannerConnection.scanFile(
                 context,

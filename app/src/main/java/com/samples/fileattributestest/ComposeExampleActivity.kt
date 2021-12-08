@@ -31,6 +31,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.samples.fileattributestest.ui.theme.FileAttributesTestTheme
+import kotlinx.coroutines.runBlocking
+import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
+
 
 class ComposeExampleActivity : ComponentActivity() {
     @ExperimentalMaterialApi
@@ -58,10 +63,8 @@ class ComposeExampleActivity : ComponentActivity() {
                     rememberLauncherForActivityResult(StartIntentSenderForResult()) { result ->
                         if (result.resultCode == RESULT_OK) {
                             mostRecentImage?.let {
-                                StorageUtils.editLastModificationDate(
-                                    context,
-                                    it.path
-                                )
+                                StorageUtils.editLastModificationDate(context, it)
+                                StorageUtils.editFileContent(context, it)
                             }
                         }
                     }
@@ -78,28 +81,23 @@ class ComposeExampleActivity : ComponentActivity() {
                                 }
                             } else {
                                 Button(onClick = {
-                                    requestPermissions.launch(arrayOf(READ_EXTERNAL_STORAGE, WRITE_EXTERNAL_STORAGE))
-                                }) {
-                                    Text("Request read/write storage permissions")
-                                }
-                            }
-                            Button(onClick = {
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                    requestPermissions.launch(arrayOf(READ_EXTERNAL_STORAGE))
-                                } else {
                                     requestPermissions.launch(
                                         arrayOf(
                                             READ_EXTERNAL_STORAGE,
                                             WRITE_EXTERNAL_STORAGE
                                         )
                                     )
+                                }) {
+                                    Text("Request read/write storage permissions")
                                 }
-                            }) {
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                    Text("Click to edit last item (write request)")
-                                } else {
-                                    Text("Click to edit last item (without write request)")
-                                }
+                            }
+                        }
+                        Divider()
+
+
+                        ListItem(trailing = { Text(StorageUtils.hasManageStoragePermission().toString()) }) {
+                            Button(onClick = { requireExternalManagePermission() }) {
+                                Text("Request manage storage permission")
                             }
                         }
                         Divider()
@@ -112,6 +110,20 @@ class ComposeExampleActivity : ComponentActivity() {
                                 }
                             ) {
                                 Text("Get most recent image")
+                            }
+                        }
+                        Divider()
+
+
+                        ListItem {
+                            Button(
+                                enabled = mostRecentImage != null,
+                                onClick = {
+                                    StorageUtils.editLastModificationDate(context, mostRecentImage!!)
+                                    StorageUtils.editFileContent(context, mostRecentImage!!)
+                                }
+                            ) {
+                                Text("Click to edit last item (manage)")
                             }
                         }
                         Divider()
@@ -141,10 +153,9 @@ class ComposeExampleActivity : ComponentActivity() {
                                 Button(
                                     enabled = mostRecentImage != null,
                                     onClick = {
-                                        StorageUtils.editLastModificationDate(
-                                            context,
-                                            mostRecentImage!!.path
-                                        )
+
+                                        StorageUtils.editLastModificationDate(context, mostRecentImage!!)
+                                        StorageUtils.editFileContent(context, mostRecentImage!!)
                                     }
                                 ) {
                                     Text("Click to edit last item (without write request)")
@@ -161,6 +172,15 @@ class ComposeExampleActivity : ComponentActivity() {
                     }
                 }
             }
+        }
+    }
+
+    private fun requireExternalManagePermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            startActivity(Intent().apply {
+                action = Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION
+                data = Uri.fromParts("package", packageName, null)
+            })
         }
     }
 }
